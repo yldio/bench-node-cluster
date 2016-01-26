@@ -14,3 +14,8 @@ http.createServer((req, res) => {
 }).listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
+
+setInterval(() => {
+  var start = Date.now();
+  while (Date.now() - start < 10);
+}, 50);
