@@ -1,0 +1,97 @@
+---
+- name: Run tests
+  remote_user: root
+
+  vars:
+    - node_version: v4.2.6
+    - time: 120s
+    - threads: 2
+    - connections: 100
+    - throughput: 2000
+
+  tasks:
+
+    - name: Install packages
+      apt: name={{ item }} state=present update_cache=yes cache_valid_time=86400
+      with_items:
+        - build-essential
+        - make
+        - curl
+        - git
+        - upstart
+        - libssl-dev
+        - nginx
+
+    - name: Download Node binaries
+      get_url: url="https://nodejs.org/dist/{{ node_version }}/node-{{ node_version }}-linux-x64.tar.xz" dest=/tmp/
+
+    - name: Extract Node binaries
+      unarchive: src="/tmp/node-{{ node_version }}-linux-x64.tar.xz" dest=/tmp/ copy=no
+
+    - name: Install Node binaries
+      synchronize: src="/tmp/node-{{ node_version }}-linux-x64/" dest=/usr/local/
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Clone wrk2
+      git: repo=https://github.com/giltene/wrk2.git dest=/root/wrk2 depth=1
+
+    - name: Make wrk2
+      command: make chdir=/root/wrk2 creates=/root/wrk2/wrk
+
+    - name: Upload server script
+      copy: src=server.js dest=/root/
+
+    - name: Copy single instance upstart configuration script
+      copy: force=yes src=server-upstart.conf dest=/etc/init/server-single.conf
+
+    - name: Start service
+      service: state=restarted name=server-single args="PORT=6000"
+
+    - name: Bench single
+      shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://127.0.0.1:6000/ > /root/single.txt"
+      tags: bench
+
+    - name: Download single test result
+      fetch: fail_on_missing=yes flat=yes src=/root/single.txt dest=single.txt
+      tags: download
+
+    - name: Upload cluster script
+      copy: src=cluster.js dest=/root/
+
+    - name: Copy cluster upstart configuration script
+      copy: force=yes src=cluster-upstart.conf dest=/etc/init/server-cluster.conf
+
+    - name: Start service
+      service: state=restarted name=server-cluster
+
+    - name: Bench cluster
+      shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://127.0.0.1:7000/ > /root/cluster.txt"
+      tags: bench
+
+    - name: Download cluster test result
+      fetch: fail_on_missing=yes flat=yes src=/root/cluster.txt dest=cluster.txt
+      tags: download
+
+    - name: Configure nginx
+      copy: force=yes src=nginx.conf dest=/etc/nginx/sites-enabled/default
+
+    - name: Start nginx
+      service: name=nginx state=restarted
+
+    - name: Start service on 8001
+      service: state=restarted name=server-single args="PORT=8001"
+    - name: Start service on 8002
+      service: state=restarted name=server-single args="PORT=8002"
+    - name: Start service on 8003
+      service: state=restarted name=server-single args="PORT=8003"
+    - name: Start service on 8004
+      service: state=restarted name=server-single args="PORT=8004"
+
+    - name: Bench nginx
+      shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://127.0.0.1:1337/ > /root/nginx.txt"
+      # tags: bench
+
+    - name: Download cluster test result
+      fetch: fail_on_missing=yes flat=yes src=/root/nginx.txt dest=nginx.txt
+      # tags: download
+
