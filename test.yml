@@ -4,10 +4,10 @@
 
   vars:
     - node_version: v4.2.6
-    - time: 120s
+    - time: 30s
     - threads: 2
     - connections: 100
-    - throughput: 2000
+    - throughput: 50000
 
   tasks:
 
@@ -89,9 +89,9 @@
 
     - name: Bench nginx
       shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://127.0.0.1:1337/ > /root/nginx.txt"
-      # tags: bench
+      tags: bench
 
     - name: Download cluster test result
       fetch: fail_on_missing=yes flat=yes src=/root/nginx.txt dest=nginx.txt
-      # tags: download
+      tags: download
 
