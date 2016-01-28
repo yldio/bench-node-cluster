@@ -6,7 +6,7 @@
     - node_version: v4.2.6
     - time: 15s
     - threads: 2
-    - connections: 100
+    - connections: 4
     - throughput: 50000
 
   tasks:
