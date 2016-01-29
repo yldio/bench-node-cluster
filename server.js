@@ -12,7 +12,7 @@ http.createServer((req, res) => {
 }).listen(port, hostname);
 
 
-setInterval(() => {
-  var start = Date.now(); while (Date.now() - start < 50);
-}, 100);
+// setInterval(() => {
+//   var start = Date.now(); while (Date.now() - start < 50);
+// }, 100);
 
