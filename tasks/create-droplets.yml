@@ -1,0 +1,78 @@
+---
+- name: Create workstations
+  hosts: local
+
+  vars_files:
+    - ../vars.yml
+
+  tasks:
+
+    - name: Ensure hosts groups
+      lineinfile: >
+        dest={{ inventory_file }}
+        state=present
+        line="[{{ item }}]"
+      with_items: [ server, loadgen ]
+
+    - name: Ensure benchmark key
+      digital_ocean: >
+        api_token={{ do_api_token }}
+        command=ssh
+        name=benchmark
+        ssh_pub_key={{ lookup("file", ".secret/id_rsa.pub") }}
+        state=present
+      register: do_benchmark_key
+
+    - name: Ensure server droplet
+      digital_ocean: >
+        api_token={{ do_api_token }}
+        command=droplet
+        name="cluster-tests-server"
+        region_id=ams3
+        size_id=8gb
+        image_id=ubuntu-14-04-x64
+        ssh_key_ids={{ do_benchmark_key.ssh_key.id }}
+        private_networking=yes
+        wait=yes
+        unique_name=yes
+        state=active
+      register: do_server_droplet_result
+
+    - name: Save server IPs
+      set_fact:
+        server_private_ip: "{{ do_server_droplet_result.droplet.networks.v4[0].ip_address }}"
+        server_public_ip: "{{ do_server_droplet_result.droplet.networks.v4[1].ip_address }}"
+
+    - name: Ensure server droplet IP is in the inventory file
+      lineinfile: >
+        dest={{ inventory_file }}
+        state=present
+        insertafter="\[server\]"
+        line="{{ server_public_ip }}\tserver_private_ip={{ server_private_ip }} server=yes"
+
+    - name: Ensure loadgen droplet
+      digital_ocean: >
+        api_token={{ do_api_token }}
+        command=droplet
+        name="cluster-tests-loadgen"
+        region_id=ams3
+        size_id=512mb
+        image_id=ubuntu-14-04-x64
+        ssh_key_ids={{ do_benchmark_key.ssh_key.id }}
+        private_networking=yes
+        wait=yes
+        unique_name=yes
+        state=active
+      register: do_loadgen_droplet_result
+
+    - name: Save server IPs
+      set_fact:
+        loadgen_public_ip: "{{ do_loadgen_droplet_result.droplet.networks.v4[1].ip_address }}"
+
+    - name: Ensure loadgen droplet IP is in the inventory file
+      lineinfile: >
+        dest={{ inventory_file }}
+        state=present
+        insertafter="\[loadgen\]"
+        line="{{ loadgen_public_ip }}\tserver_private_ip={{ server_private_ip }} loadgen=yes"
+

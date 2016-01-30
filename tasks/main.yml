@@ -1,0 +1,21 @@
+---
+- hosts: server
+  remote_user: root
+
+  vars_files:
+    - ../vars.yml
+
+  tasks:
+    - include: provision-server.yml
+    - include: deploy.yml
+
+- hosts: loadgen
+  remote_user: root
+
+  vars_files:
+    - ../vars.yml
+
+  tasks:
+    - include: provision-loadgen.yml
+    - include: test.yml
+

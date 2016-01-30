@@ -3,33 +3,30 @@
 This is set of ansible scripts and assets that automates benchmarking of nginx,
 haproxy and the cluster module as a host-local load balancing solution.
 
+## Prerequisites
+
+- ansible 2.0 or above
+- `dopy` (use **pip** to install)
+- Digital Ocean access token
+
 ## Usage
 
-Prerequisites:
+### 1. Create instances
 
-- ansible installed on your local machine
-- root access to a 4 CPU host
+1. Create a directory `.secret`
+2. Create a text file `.secret/dotoken` with a Digital Ocean access token
+3. Use `ssh-keygen` to generate a `id_rsa` and `id_rsa.pub` pair in `.secret/` or edit `ansible.cfg` to change the ssh key.
+4. Run `ansible-playbook tasks/create-droplets.yml`
 
-Open `ansible/all.yml` and configure variables, then run with:
+### 2. Run tests
 
-```
-$ ansible-playbook -i '<target-ip>,' ansible/all.yml
-```
+1. Edit `vars.yml`
+2. Run `ansible-playbook tasks/main.yml`
+3. Run `results/print.sh` to check the results
 
-After the first run you can use tags to run only specific benchmarks:
+Optionally, use `ansible-playbook tasks/main.yml --tags haproxy` to run just against haproxy, other allowed values are `single`, `cluster` and `nginx`.
 
-```
-$ ansible-playbook -i '<target-ip>,' ansible/all.yml --tags nginx
-```
+### 3. Clean up
 
-Display results:
-
-```
-$ ./print-results.sh
-```
-
-## TODO
-
-- Generate load from a separate machine using private networking
-- Add iptables or LVS
+1. Run `ansible-playbook tasks/destroy-droplets.yml`
 

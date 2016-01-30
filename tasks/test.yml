@@ -1,0 +1,32 @@
+- name: Bench single
+  shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://{{ server_private_ip }}:{{ single_port }}/ > /root/single.txt"
+  tags: single
+
+- name: Download single test result
+  fetch: fail_on_missing=yes flat=yes src=/root/single.txt dest=../results/single.txt
+  tags: single
+
+- name: Bench cluster
+  shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://{{ server_private_ip }}:{{ cluster_port }}/ > /root/cluster.txt"
+  tags: cluster
+
+- name: Download cluster test result
+  fetch: fail_on_missing=yes flat=yes src=/root/cluster.txt dest=../results/cluster.txt
+  tags: cluster
+
+- name: Bench haproxy
+  shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://{{ server_private_ip }}:{{ haproxy_port }}/ > /root/haproxy.txt"
+  tags: haproxy
+
+- name: Download haproxy test result
+  fetch: fail_on_missing=yes flat=yes src=/root/haproxy.txt dest=../results/haproxy.txt
+  tags: haproxy
+
+- name: Bench nginx
+  shell: "/root/wrk2/wrk -t{{ threads }} -c{{ connections }} -d{{ time }} -R{{ throughput }} http://{{ server_private_ip }}:{{ nginx_port }}/ > /root/nginx.txt"
+  tags: nginx
+
+- name: Download nginx test result
+  fetch: fail_on_missing=yes flat=yes src=/root/nginx.txt dest=../results/nginx.txt
+  tags: nginx
+

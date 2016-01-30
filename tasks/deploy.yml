@@ -1,0 +1,57 @@
+- name: Deploy server script
+  copy: src=server.js dest=/root/
+  register: deploy_server_script_result
+  tags: [ single, cluster, haproxy, nginx ]
+
+- name: Deploy server upstart configuration
+  copy: src=server-upstart.conf dest=/etc/init/server-single.conf
+  register: deploy_server_upstart_result
+  tags: [ single, cluster, haproxy, nginx ]
+
+- name: Ensure single service
+  service: state=restarted name=server-single args="PORT={{ single_port }}"
+  tags: single
+  when: deploy_server_script_result.changed or deploy_server_upstart_result.changed
+  tags: single
+
+- name: Ensure multiple backend services
+  service: state=restarted name=server-single args="PORT={{ item }}"
+  with_items: "{{ backend_ports }}"
+  when: deploy_server_script_result.changed or deploy_server_upstart_result.changed
+  tags: [ haproxy, nginx ]
+
+- name: Deploy cluster script
+  copy: src=cluster.js dest=/root/
+  register: deploy_cluster_script_result
+  tags: cluster
+
+- name: Deploy cluster upstart configuration
+  template: src=cluster-upstart.conf dest=/etc/init/server-cluster.conf
+  register: deploy_cluster_upstart_result
+  tags: cluster
+
+- name: Ensure cluster service
+  service: state=restarted name=server-cluster
+  when: deploy_cluster_script_result.changed or deploy_cluster_upstart_result.changed
+  tags: cluster
+
+- name: Configure haproxy
+  template: src=haproxy.cfg dest=/etc/haproxy/haproxy.cfg
+  register: configure_haproxy_result
+  tags: haproxy
+
+- name: Restart haproxy
+  service: name=haproxy state=restarted
+  when: configure_haproxy_result.changed
+  tags: haproxy
+
+- name: Configure nginx
+  template: src=nginx.conf dest=/etc/nginx/nginx.conf
+  register: configure_nginx_result
+  tags: nginx
+
+- name: Restart nginx
+  service: name=nginx state=restarted
+  when: configure_nginx_result.changed
+  tags: nginx
+

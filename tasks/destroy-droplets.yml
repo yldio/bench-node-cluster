@@ -1,0 +1,24 @@
+- name: Destroy workstations
+  hosts: local
+
+  vars_files:
+    - ../vars.yml
+
+  tasks:
+
+    - name: Remove droplet
+      digital_ocean: >
+        api_token={{ do_api_token }}
+        command=droplet
+        name="cluster-tests-{{ item }}"
+        unique_name=yes
+        state=deleted
+      with_items: [ server, loadgen ]
+
+    - name: Remove droplet IP from the inventory file
+      lineinfile: >
+        dest={{ inventory_file }}
+        regexp="{{ item }}=yes"
+        state=absent
+      with_items: [ server, loadgen ]
+

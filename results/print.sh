@@ -6,6 +6,6 @@ function check {
 
 check single
 check cluster
-check nginx
 check haproxy
+check nginx
 

@@ -1,4 +1,3 @@
-
 - name: Add PPAs
   apt_repository: repo={{ item }} state=present
   with_items:
@@ -8,12 +7,7 @@
 - name: Install packages
   apt: name={{ item }} state=present update_cache=yes cache_valid_time=86400
   with_items:
-    - build-essential
-    - make
-    - curl
-    - git
     - upstart
-    - libssl-dev
     - nginx
     - haproxy
     - htop
@@ -29,12 +23,5 @@
   synchronize: src="/tmp/node-{{ node_version }}-linux-x64/" dest="/usr/local/"
   delegate_to: "{{ inventory_hostname }}"
 
-- name: Clone wrk2
-  git: repo=https://github.com/giltene/wrk2.git dest=/root/wrk2 depth=1
-
-- name: Make wrk2
-  command: make chdir=/root/wrk2 creates=/root/wrk2/wrk
-
 - name: Enable haproxy
   lineinfile: dest=/etc/default/haproxy regexp=^ENABLED line=ENABLED=1
-

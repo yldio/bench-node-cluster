@@ -1,0 +1,21 @@
+ansible_python_interpreter: "/usr/bin/env python"
+inventory_file: ../inventory
+
+# Digital Ocean access token
+do_api_token: "{{ lookup('file', '.secret/dotoken') }}"
+
+node_version: v4.2.6
+
+# Configuration values for wrk2
+time: 15s
+threads: 2
+connections: 100
+throughput: 50000
+
+# Ports
+single_port: 9000
+backend_ports: [ 9001, 9002, 9003, 9004 ]
+cluster_port: 8000
+haproxy_port: 7000
+nginx_port: 6000
+
