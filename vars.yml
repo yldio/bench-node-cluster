@@ -8,8 +8,8 @@ node_version: v4.2.6
 
 # Configuration values for wrk2
 time: 15s
-threads: 2
-connections: 100
+threads: 5000
+connections: 5000
 throughput: 50000
 
 # Ports
